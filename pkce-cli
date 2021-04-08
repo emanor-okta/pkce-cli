@@ -13,6 +13,8 @@ program
   .option('-o, --okta_org <okta org url>', 'ex: https://micah.oktapreview.com', '')
   .option('-s, --scopes <space separated list of scopes>', 'Space separated list of scopes', 'openid profile email')
   .option('-r, --redirect_uri <redirect uri>', 'redirect uri', 'http://localhost:8080/redirect')
+  .option('-u, --user <username>', 'App User', '')
+  .option('-p, --pass <password>', 'User password', '')
   .parse(process.argv);
   
 if (
@@ -42,30 +44,51 @@ var codeChallenge = base64url(
   crypto.createHash('sha256').update(codeVerifier).digest('base64')
 );
 console.log('Created Code Challenge ($): ' + codeChallenge + '\n');
-var authorizeUrl = buildAuthorizeUrl(codeVerifier, codeChallenge);
-console.log('About to call Authorize URL: ' + authorizeUrl + '\n');
 
-console.log('press any key to continue...');
+
+// step 0.5 (Authn)
+const formData = {
+  "username": program.user,
+  "password": program.pass,
+  "options": {
+    "multiOptionalFactorEnroll": true,
+    "warnBeforePasswordExpired": true
+  }  
+}; 
+
+
+request.post(
+  {
+    url: program.okta_org + '/api/v1/authn',
+    headers: {
+      "content-type": "application/json",
+    },
+    body: formData,
+    json: true
+  },
+  function (err, httpResponse, body) {
+    console.log('session: '+body.sessionToken);
+    var authorizeUrl = buildAuthorizeUrl(codeVerifier, codeChallenge, body.sessionToken);
+
+    request.get({
+      url: authorizeUrl,
+      function (err, httpResponse, body) {
+        if (err) {
+          console.log(err);
+        }
+      }
+    });
+  }
+);
+
+
+console.log('Running...');
 keypress().then(() => {
-  // Step 1: call authorize endpoint where user will authenticate to Okta
-  opn(authorizeUrl);
 });
 
 // Step 2: Okta redirects back to this app with an auth code
 async function oktaRedirectHandler(req, res, next) {
-  var body = '<html><body><h4>OAuth2 authorize complete. ' + 
-    'You can close this tab.</h4></body></html>';
-  res.writeHead(200, {
-      'Content-Length': Buffer.byteLength(body),
-      'Content-Type': 'text/html'
-  });
-  res.write(body);
-  res.end();
-
   console.log('\nGot code (α): ' + req.query.code + '\n');
-
-  console.log('press any key to continue...');
-  await keypress();
 
   var form = {
     grant_type: 'authorization_code',
@@ -86,9 +109,6 @@ async function oktaRedirectHandler(req, res, next) {
   console.log(form);
   console.log();
 
-  console.log('press any key to continue...');
-  await keypress();
-  
   // Step 3: call token endpoint where Okta will exchange code for tokens
   request.post(
     { 
@@ -107,21 +127,7 @@ async function tokenResponseHandler(tokenResponse) {
   console.log('\nGot token response:');
   console.log(tokenResponse);
   console.log();
-
-  console.log('press any key to continue...');
-  await keypress();  
-
-  console.log('\nCalling /userinfo endpoint with access token\n');
-  
-  // Step 4: use the access_token to hit the /userinfo endpoint
-  request.get(
-    program.okta_org + '/oauth2/v1/userinfo', 
-    { auth: { bearer: tokenResponse.access_token } }, 
-    function (err, httpResponse, body) {
-      console.log(JSON.parse(body));
-      process.exit(0);
-    }
-  );
+  process.exit(0); 
 }
 
 function uuid() {
@@ -139,7 +145,7 @@ function base64url(str){
     return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/\=+$/, '');
 }
 
-function buildAuthorizeUrl(codeVerifier, codeChallenge) {
+function buildAuthorizeUrl(codeVerifier, codeChallenge, sessionToken) {
 	var authorizeUrl = program.okta_org + '/oauth2/v1/authorize?' +
     'client_id=' + program.client_id + '&' +
     'response_type=code&' +
@@ -147,7 +153,9 @@ function buildAuthorizeUrl(codeVerifier, codeChallenge) {
     'redirect_uri=' + program.redirect_uri + '&' +
     'state=' + uuid() + '&' +
     'code_challenge_method=S256&' + 
-    'code_challenge=' + codeChallenge;
+    'code_challenge=' + codeChallenge + '&' +
+    'prompt=none&' +
+    'sessionToken=' + sessionToken;
   return authorizeUrl;
 }
 
