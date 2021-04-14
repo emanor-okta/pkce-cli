@@ -9,10 +9,10 @@ This tool demonstrates an Automated Authorization Code Flow with PKCE and Authn
 ```
 Edit run.sh
 Add
-*client_id
-*okta_org
-*user
-*user
+ --client_id
+ --okta_org
+ --user
+ --user
 ```
 
 ## Run
