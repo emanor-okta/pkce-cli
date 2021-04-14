@@ -1,112 +1,63 @@
-## PKCE Command Line (SPA example coming soon)
+## Modified PKCE Command Line Tool to Automate Login
 
-This tool demonstrates the Authorization Code Flow with PKCE 
+This tool demonstrates an Automated Authorization Code Flow with PKCE and Authn
 
-It follows these steps:
 
-1. Creates a random string called the `code verifier`
-2. Hashes the `code verifier` creating a value called the `code challenge`
-3. Builds an authorization URL which includes:
-    a. Okta OIDC Client ID
-    b. a list of request scopes
-    c. a redirect uri
-    d. a randomly generated state value
-    e. the `code challenge`
-    f. a response type set to `code` to indicate that we're using the authorization code flow
-4. Launches a browser with the authorization URL, at which point you will authenticate
-5. Receives the redirect from the authorization url, which includes a `code`
-6. Calls the `token` endpoint with:
-    a. grant type set to `authorization code`
-    b. a redirect uri that must match the one used in the authorization step
-    c. Okta OIDC Client ID
-    d. the `code`
-    e. the `code verifier` from earlier
-7. Displays the tokens returned from the `token` endpoint
-8. Uses the returned access token to call the `userinfo` endpoint
 
 ## Usage
 
 ```
-Usage: pkce-cli [options]
-
-Options:
-  -c, --client_id <okta client id>               OIDC Client ID (default: "")
-  -o, --okta_org <okta org url>                  ex: https://micah.oktapreview.com (default: "")
-  -s, --scopes <space separated list of scopes>  Space separated list of scopes (default: "")
-  -r, --redirect_uri <redirect uri>              redirect uri (default: "")
-  -h, --help                                     output usage information
+Edit run.sh
+Add
+*client_id
+*okta_org
+*user
+*user
 ```
 
 ## Run
 
 ```
 npm install
-./pkce-cli \
-  --client_id 0oahdifc72URh7rUV0h7 \
-  --okta_org https://micah.oktapreview.com \
-  --scopes "openid profile email" \
-  --redirect_uri http://localhost:8080/redirect 
+./run.sh
 ```
 
 You'll get output like this:
 
 ```
-Created Code Verifier (v): 0233_39e5_6b3d_70b6_087f_b675_cc62_b178_ce21_577f_d661
+Created Code Verifier (v): bc7b_fb3a_5576_3569_5b28_3876_4974_3bfe_9793_383d_00b3
 
-Created Code Challenge ($): Y3LBgtM-gcL_gEw-TGt26uOqNtnBO2nWXEwm_GC5Oh4
+Created Code Challenge ($): 6hxXJb5aXMH1Kt7BMsOkOLwqhD5CW0rQJ3IENyrDj6c
 
-Calling Authorize URL: https://micah.oktapreview.com/oauth2/v1/authorize?client_id=0oahdifc72URh7rUV0h7&response_type=code&scope=openid profile email&redirect_uri=http://localhost:8080/redirect&state=f3a5_f3a7_051f_2f97_f147_272a_d074_86fb_7d08_8650_3d8b&code_challenge_method=S256&code_challenge=Y3LBgtM-gcL_gEw-TGt26uOqNtnBO2nWXEwm_GC5Oh4
+Running...
+session: 20111jgOZ0pNkOoQTAl70UDI_2_8R9U90f5LnEwQXxuACwxvkQDZ__7
 
-Got code (α): C3LZZVjIYkOsjh42XTpZ
+Got code (α): ehCJgNuhboqLspMPpDFT0QQeEx4FrziFp-pMHbeBMEY
+
 
 Calling /token endpoint with:
-client_id: 0oahdifc72URh7rUV0h7
-code_verifier (v): 0233_39e5_6b3d_70b6_087f_b675_cc62_b178_ce21_577f_d661
-code (α): C3LZZVjIYkOsjh42XTpZ
+client_id: 0oa1ddcipQGRBMQ815d6
+code_verifier (v): bc7b_fb3a_5576_3569_5b28_3876_4974_3bfe_9793_383d_00b3
+code (α): ehCJgNuhboqLspMPpDFT0QQeEx4FrziFp-pMHbeBMEY
 
-Here is the form post that will be sent to the /token endpoint:
-{ grant_type: 'authorization_code',
+Here is the complete form post that will be sent to the /token endpoint:
+{
+  grant_type: 'authorization_code',
   redirect_uri: 'http://localhost:8080/redirect',
-  client_id: '0oahdifc72URh7rUV0h7',
-  code: 'C3LZZVjIYkOsjh42XTpZ',
-  code_verifier: '0233_39e5_6b3d_70b6_087f_b675_cc62_b178_ce21_577f_d661' }
+  client_id: '0oa1ddcipQGRBMQ815d6',
+  code: 'ehCJgNuhboqLspMPpDFT0QQeEx4FrziFp-pMHbeBMEY',
+  code_verifier: 'bc7b_fb3a_5576_3569_5b28_3876_4974_3bfe_9793_383d_00b3'
+}
+
 
 Got token response:
-{ access_token:
-   'eyJraWQiOiItVV92MHBJVGx5X0V3MTJfTzZuT1lWb081ZVBucm1Iek9wbkxfS2FHN0lzIiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULnloZ0k4WFRTVWhrQ0dRT28xSVQwSXVYd3pSc094Rm5HY2xDNmN2bkFEMlkiLCJpc3MiOiJodHRwczovL21pY2FoLm9rdGFwcmV2aWV3LmNvbSIsImF1ZCI6Imh0dHBzOi8vbWljYWgub2t0YXByZXZpZXcuY29tIiwic3ViIjoibWljYWhAYWZpdG5lcmQuY29tIiwiaWF0IjoxNTQyMzg5NjY2LCJleHAiOjE1NDIzOTMyNjYsImNpZCI6IjBvYWhkaWZjNzJVUmg3clVWMGg3IiwidWlkIjoiMDB1ZG8zYmFseE5od0tkU0wwaDciLCJzY3AiOlsicHJvZmlsZSIsIm9wZW5pZCIsImVtYWlsIl19.db85XwSTta0UpxySopx6A66kBWybJtxgYZSP0EGoiTFV1dHHhlGR563J3zaF94a6m8rSIM9g_O_HBskLYr7uaZVTIlVq0pgT9v8NQ2dvwl5f0br9dfYgBv-ftGaSUr5BGJYTgM3urvx0x7M5HME_Me3id7tFQydvvcgJFOn_2nY8f-usy1jT8aJtOuxcgYqWrOVJmJJVRnI6tB8T7LT1GmIR9pe9dxaJxubqYIkCO2UeUCpBoLJ3duTpSIAmOFyMH1gxdXLHD4xQaBm-AKfMvLPSvEi-pH1soCXGX1dQVuwgBAiF7sNJNb4WueXu92AcSzma3jtEh0ri5RCYxywAbA',
+{
   token_type: 'Bearer',
   expires_in: 3600,
-  scope: 'profile openid email',
-  id_token:
-   'eyJraWQiOiJUcGwtaVowcHhtQWpZb05ISlVSLUtjWkdCMGdUTWFUYkd1clQwd19GMXgwIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiIwMHVkbzNiYWx4Tmh3S2RTTDBoNyIsIm5hbWUiOiJNaWNhaCBTaWx2ZXJtYW4iLCJlbWFpbCI6Im1pY2FoQGFmaXRuZXJkLmNvbSIsInZlciI6MSwiaXNzIjoiaHR0cHM6Ly9taWNhaC5va3RhcHJldmlldy5jb20iLCJhdWQiOiIwb2FoZGlmYzcyVVJoN3JVVjBoNyIsImlhdCI6MTU0MjM4OTY2NiwiZXhwIjoxNTQyMzkzMjY2LCJqdGkiOiJJRC5fS09kSjZITnpzNkpESkZHUEk5dlpTOHNkMk1memdGUW55bEpoRFpxaW53IiwiYW1yIjpbInB3ZCJdLCJpZHAiOiIwMG85dmFza2sySnQyWEZWZzBoNyIsInByZWZlcnJlZF91c2VybmFtZSI6Im1pY2FoQGFmaXRuZXJkLmNvbSIsImF1dGhfdGltZSI6MTU0MjM4OTYxMSwiYXRfaGFzaCI6IkQ3eU93WldjbzRTbFhGXzJJNnJpN0EifQ.XL1yFsx5gHl4fvngvTwVJwncfCyb5YwClwFpGsrUKr0MFDWBZuNmPvfPOFDBVkHbYmqUi3bajSYij7buI0mxauTJ1ZeqKeepUwLuVyKq94qbyHFXgvSlGXBYSXHA4sfJswJVSdkaoCXenyXTJJbcPuzYq6wpGt9a8ri4dq1cQ70UnXdgMTfbCGW_9Q6Tzv1wZa-GEB5i6iAfktrETORjMyFsGIAFaRQY5wdmsIf6LT3uIjKU7y4mq-X6rTJyJlkjmGxZv1QP0kfKiTSsGqeWt-s1-XinEtfnkOlLALNNIAo2MfB8cT88ixPZvCSt7VAzD_eBs8n_HkMqLQot4bs_Tw' }
-
-Calling /userinfo endpoint with access token
-
-{ sub: '00udo3balxNhwKdSL0h7',
-  name: 'Micah Silverman',
-  profile:
-   'https://www.facebook.com/app_scoped_user_id/10156159259014459/',
-  locale: 'en-US',
-  email: 'micah@afitnerd.com',
-  preferred_username: 'micah@afitnerd.com',
-  given_name: 'Micah',
-  family_name: 'Silverman',
-  zoneinfo: 'America/Los_Angeles',
-  updated_at: 1541796005,
-  email_verified: true }
+  access_token: 'eyJraWQiOiIwNE45M2l0WnpjMERhNHh1NlNuM3k4WEJGS19CVkVSTk9zaU1ucFdqRHpBIiwiYWxnIjoiUlMyNTYifQ.eyJ2ZXIiOjEsImp0aSI6IkFULmExMEZFM19ZbGF2OS1xUFc1WlBZbkY5dm1qQmU4SDFPRlo1RDJ3Ylh0WTgiLCJpc3MiOiJodHRwczovL2VyaWttYW5vci5va3RhLmNvbSIsImF1ZCI6Imh0dHBzOi8vZXJpa21hbm9yLm9rdGEuY29tIiwic3ViIjoidGVzdC51c2VyQG1haWwuY29tIiwiaWF0IjoxNjE4NDEzNTYxLCJleHAiOjE2MTg0MTcxNjEsImNpZCI6IjBvYTFkZGNpcFFHUkJNUTgxNWQ2IiwidWlkIjoiMDB1azdlM3ZySjExRUZrTk41ZDYiLCJzY3AiOlsib3BlbmlkIiwicHJvZmlsZSIsImVtYWlsIl19.XDcoHnYdAZXxJI9uLeMFuzL6nWP6mqllkhrGoi0hsET9eAPJGrLXEBBugF3LmSMmMpp7HzQGrrtM9lcbo794bZQDrEkaxHxidmWHJSMDDdZt901ie4TGvn-RyE_94Bt_PqQq0c33mcuIkh2fz-6gYE_TcgG6EFsv5pdjdIPIx8FFe577-I1C4nkVuedW_OkKC4eBosU4BJ4f5m6tOlNMUkl3aPfaL9nLRXpjag1BkZGSHO_HroQVNvvIiZZDXOB_-HU1SO03qJdBt5S4LQboH_NMqO2YzjP8sEIOqc8j5FLkW26F4XlVvTQvfPSJIw7BcNZ9DIjyCrr6bJD4dP1Wig',
+  scope: 'openid profile email',
+  id_token: 'eyJraWQiOiJMc1p2aFV2SEVkTlJTYzM5RVREOTItZWFLRFQwYjZ6bnZkVDhKU1VvN2VzIiwiYWxnIjoiUlMyNTYifQ.eyJzdWIiOiIwMHVrN2UzdnJKMTFFRmtOTjVkNiIsIm5hbWUiOiJ0ZXN0IHVzZXIiLCJlbWFpbCI6InRlc3QudXNlckBtYWlsLmNvbSIsInZlciI6MSwiaXNzIjoiaHR0cHM6Ly9lcmlrbWFub3Iub2t0YS5jb20iLCJhdWQiOiIwb2ExZGRjaXBRR1JCTVE4MTVkNiIsImlhdCI6MTYxODQxMzU2MSwiZXhwIjoxNjE4NDE3MTYxLCJqdGkiOiJJRC5KNnRhQWd2X3NtaktGMnpVQ2VNSHdnakVmUG14eS1pdm9kSy1CY2d4clpVIiwiYW1yIjpbInB3ZCJdLCJpZHAiOiIwMG9wOTBnM01rVjFsNXRSajVkNSIsInByZWZlcnJlZF91c2VybmFtZSI6InRlc3QudXNlckBtYWlsLmNvbSIsImF1dGhfdGltZSI6MTYxODQxMzU2MCwiYXRfaGFzaCI6Imkzb3VWeWlrM0IxeU9yb0hrcTVrZEEifQ.PPEhnnEpHDlwykSPQiMM4e-iglf1kgueqe5VwJsPCUDCZ2QDAUrU35LFzZWf0wA8VMV7cIUtc4io7bdNYWpd32spbttL3dqObvzOB7aT_lWk4CCjYTmzYGbFRz4NPSk5FhwF_8JA8TfDQFyCTq1ytACoUzfV4H5LfEU9vSWuEipSr-F0JQlwirIMGxfG_7zIj9PtvkcOUr8JL7s4mFYnRka7mHOFZg28Ph45h3bfAKd0MTxVuE527zw1s3Vo3JNtNiJDuhzSSDRTOLdNyVMfokUfA1_ExXouxC0LTaz8ZeJx79bFv6-gtoJTRjaZvI1HDDohqU12UUh9iCvWbVhhsA'
+}
 ```
 
-## Diagrams
 
-Here's an overview of the Authorization Code with PKCE flow:
-
-![pkce](pkce.png)
-
-Note: This image was generated using [mermaid](https://mermaidjs.github.io/). The source is [here](pkce.mmd)
-
-You can edit and regenrate the image using this command:
-
-```
-mmdc -i pkce.mmd -o pkce.png -b transparent -C mmdc.css
-mmdc -i pkce.mmd -o pkce.svg -C mmdc.css
-``` 
